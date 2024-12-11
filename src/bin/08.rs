@@ -69,7 +69,7 @@ pub fn part_two(input: &str) -> Option<u32> {
                 for k in 0..=width {
                     let node_1 = (x2 as i32 + dx * k, y2 as i32 + dy * k);
                     let node_2 = (*x as i32 - dx * k, *y as i32 - dy * k);
-                    if (node_1.0 < 0|| node_1.1 < 0 || node_1.0 >= width || node_1.1 >= height)
+                    if (node_1.0 < 0 || node_1.1 < 0 || node_1.0 >= width || node_1.1 >= height)
                         && (node_2.0 < 0 || node_2.1 < 0 || node_2.0 >= width || node_2.1 >= height)
                     {
                         break;

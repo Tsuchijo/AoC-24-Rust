@@ -38,7 +38,7 @@ fn get_trailheads(
     value: u32,
 ) -> HashSet<(u32, u32)> {
     let mut trailheads: HashSet<(u32, u32)> = HashSet::new();
-    for (i,j) in vec![(0, -1), (0, 1), (1, 0), (-1, 0)] {
+    for (i, j) in vec![(0, -1), (0, 1), (1, 0), (-1, 0)] {
         let x_adj = x as i32 + i;
         let y_adj = y as i32 + j;
         if x_adj < 0
