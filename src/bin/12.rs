@@ -100,88 +100,68 @@ pub fn part_two(input: &str) -> Option<u32> {
 }
 
 fn find_number_sides(patch: HashSet<(u32, u32)>) -> u32 {
-    let mut sides: HashSet<Vec<(i32, i32)>> = HashSet::new();
-    let patch: HashSet<(i32, i32)> = remove_all_interior(patch);
-    for (i, j) in patch.iter() {
-        if !patch.contains(&(*i + 1, *j)) {
-            sides.insert(find_adjacent_x(patch.clone(), (*i, *j)));
-        }
-        if !patch.contains(&(*i, *j + 1)) {
-            sides.insert(find_adjacent_y(patch.clone(), (*i, *j)));
-        }
+    if patch.len() == 1 {
+        return 4;
     }
-    // remove all sides of length 1
-    sides.retain(|x| x.len() > 1);
-    println!("{:?}", sides);
-    return sides.len() as u32;
+    let starting_point: (u32, u32) = *patch.iter().reduce(|acc, coords| {
+        if coords.0 > acc.0 {
+            return  coords;
+        }
+        if coords.0 == acc.0 && coords.1 > acc.1 {
+            return coords;
+        }
+        return acc;
+    }).unwrap();
+    let mut current_pos = starting_point;
+    let mut num_sides = 0;
+    let mut dir = (0, -1);
+    while num_sides == 0 || current_pos != starting_point {
+        //println!("current pos: {:?}", current_pos);
+        let (_, right) = get_left_right(dir);
+        let right_pos = ((current_pos.0 as i32 + right.0) as u32, (current_pos.1 as i32 + right.1) as u32);
+        let forward_pos = ((current_pos.0 as i32 + dir.0) as u32, (current_pos.1 as i32 + dir.1) as u32);
+        if patch.contains(&right_pos) {
+            num_sides += 1;
+            current_pos = right_pos;
+            dir = right;
+        }
+        else if patch.contains(&forward_pos) {
+            current_pos = forward_pos;
+        }
+        else {
+            for rotation in get_left_rotation(dir) {
+                num_sides += 1;
+                let rotate_pos = ((current_pos.0 as i32 + rotation.0) as u32, (current_pos.1 as i32 + rotation.1) as u32);
+                if patch.contains(&rotate_pos) {
+                    current_pos = rotate_pos;
+                    dir = rotation;
+                    break
+                }
+            }
+        }
+        
+    }
+    return num_sides;
 }
 
-fn find_adjacent_x(patch: HashSet<(i32, i32)>, start: (i32, i32)) -> Vec<(i32, i32)> {
-    let mut side: Vec<(i32, i32)> = Vec::new();
-    side.push(start);
-    let mut counter = 1;
-    let mut is_more = true;
-    while is_more {
-        is_more = false;
-        if patch.contains(&(start.0 + counter, start.1)) {
-            side.push((start.0 + counter, start.1));
-            is_more = true;
-        }
-        if patch.contains(&(start.0 - counter, start.1)) {
-            side.push((start.0 - counter, start.1));
-            is_more = true;
-        }
-        counter += 1;
-    }
-    side.sort();
-    return side;
+fn get_left_right(direction: (i32, i32)) -> ((i32, i32), (i32, i32)) {
+    return match direction {
+        (1,0) => ((0, -1), (0 ,1)),
+        (-1,0) => ((0, 1), (0 ,-1)),
+        (0,1) => ((1, 0), (-1 ,0)),
+        (0,-1) => ((-1, 0), (1 ,0)),
+        _ => ((0, -1), (0 ,1))
+    };
 }
 
-fn find_adjacent_y(patch: HashSet<(i32, i32)>, start: (i32, i32)) -> Vec<(i32, i32)> {
-    let mut side: Vec<(i32, i32)> = Vec::new();
-    side.push(start);
-    let mut counter = 1;
-    let mut is_more = true;
-    while is_more {
-        is_more = false;
-        if patch.contains(&(start.0, start.1 + counter)) {
-            side.push((start.0, start.1 + counter));
-            is_more = true;
-        }
-        if patch.contains(&(start.0, start.1 - counter)) {
-            side.push((start.0, start.1 - counter));
-            is_more = true;
-        }
-        counter += 1;
-    }
-    side.sort();
-    return side;
-}
-
-fn remove_all_interior(patch: HashSet<(u32, u32)>) -> HashSet<(i32, i32)> {
-    let mut new_patch: HashSet<(i32, i32)> = HashSet::new();
-    for (i, j) in patch.iter() {
-        new_patch.insert((*i as i32, *j as i32));
-        new_patch.insert((*i as i32 + 1, *j as i32));
-        new_patch.insert((*i as i32, *j as i32 + 1));
-        new_patch.insert((*i as i32 - 1, *j as i32));
-        new_patch.insert((*i as i32, *j as i32 - 1));
-        new_patch.insert((*i as i32 + 1, *j as i32 + 1));
-        new_patch.insert((*i as i32 - 1, *j as i32 - 1));
-        new_patch.insert((*i as i32 + 1, *j as i32 - 1));
-        new_patch.insert((*i as i32 - 1, *j as i32 + 1));
-    }
-
-    for (i, j) in patch.iter() {
-        if new_patch.contains(&(*i as i32 + 1, *j as i32))
-            && new_patch.contains(&(*i as i32 - 1, *j as i32))
-            && new_patch.contains(&(*i as i32, *j as i32 + 1))
-            && new_patch.contains(&(*i as i32, *j as i32 - 1))
-        {
-            new_patch.remove(&(*i as i32, *j as i32));
-        }
-    }
-    return new_patch;
+fn get_left_rotation(direction: (i32, i32)) -> Vec<(i32, i32)> {
+    return match direction {
+        (1,0) => vec![(0, -1), (-1 , 0)],
+        (-1,0) => vec![(0, 1), (1 ,0)],
+        (0,1) => vec![(1, 0), (0 ,-1)],
+        (0,-1) => vec![(-1, 0), (0 ,1)],
+        _ => vec![(-1, 0), (0 ,1)]
+    };
 }
 
 #[cfg(test)]

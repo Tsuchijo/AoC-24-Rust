@@ -12,7 +12,7 @@ pub fn part_one(input: &str) -> Option<u32> {
         height = 8;
     }
 
-    let re = Regex::new("p=([0-9]+),([0-9]+) v=([0-9]+),([0-9]+)").unwrap();
+    let re = Regex::new("p=([0-9]+),([0-9]+) v=([0-9]+)||(-[0-9]+),([0-9]+)||(-[0-9]+)").unwrap();
     let robots: Vec<(i32, i32, i32 , i32)> = re.captures_iter(input).map(|caps|{
         let p1 = caps[1].parse().unwrap();
         let p2 = caps[2].parse().unwrap();
