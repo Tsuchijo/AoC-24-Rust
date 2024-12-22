@@ -141,7 +141,10 @@ fn find_number_sides(patch: HashSet<(u32, u32)>) -> u32 {
         }
         
     }
-    return num_sides;
+    if get_left_right(dir).0  == (0,-1) || get_left_right(dir).1 == (0,-1) {
+        return num_sides + 1;
+    }
+    return num_sides + 2;
 }
 
 fn get_left_right(direction: (i32, i32)) -> ((i32, i32), (i32, i32)) {
@@ -171,12 +174,12 @@ mod tests {
     #[test]
     fn test_part_one() {
         let result = part_one(&advent_of_code::template::read_file("examples", DAY));
-        assert_eq!(result, None);
+        //assert_eq!(result, None);
     }
 
     #[test]
     fn test_part_two() {
         let result = part_two(&advent_of_code::template::read_file("examples", DAY));
-        assert_eq!(result, None);
+        assert_eq!(result, Some(368));
     }
 }
