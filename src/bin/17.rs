@@ -1,18 +1,29 @@
+use std::collections::{HashMap, HashSet, VecDeque};
+
 advent_of_code::solution!(17);
 
 pub fn part_one(input: &str) -> Option<String> {
     let mut reg_b = 0;
     let mut reg_c = 0;
     let lines = input.lines().collect::<Vec<&str>>();
-    let mut reg_a = lines[0].split("Register A: ").skip(1).next().unwrap().parse::<u32>().unwrap();
-    let instructions: Vec<u32> = lines[4][9..].split(",").map(|x| x.parse().unwrap()).collect();
+    let mut reg_a = lines[0]
+        .split("Register A: ")
+        .skip(1)
+        .next()
+        .unwrap()
+        .parse::<u64>()
+        .unwrap();
+    let instructions: Vec<u64> = lines[4][9..]
+        .split(",")
+        .map(|x| x.parse().unwrap())
+        .collect();
     let mut program_counter = 0;
-    let mut output: Vec<u32> = Vec::new();
+    let mut output: Vec<u64> = Vec::new();
     while program_counter < instructions.len() {
         match instructions[program_counter] {
             0 => {
                 let operand = combo_operand(instructions[program_counter + 1], reg_a, reg_b, reg_c);
-                reg_a = reg_a / 2_u32.pow(operand);
+                reg_a = reg_a / 2_u64.pow(operand as u32);
                 program_counter += 2;
             }
 
@@ -32,8 +43,7 @@ pub fn part_one(input: &str) -> Option<String> {
                 let operand = instructions[program_counter + 1];
                 if reg_a == 0 {
                     program_counter += 2;
-                }
-                else {
+                } else {
                     program_counter = operand as usize;
                 }
             }
@@ -51,43 +61,44 @@ pub fn part_one(input: &str) -> Option<String> {
 
             6 => {
                 let operand = combo_operand(instructions[program_counter + 1], reg_a, reg_b, reg_c);
-                reg_b = reg_a / 2_u32.pow(operand);
+                reg_b = reg_a / 2_u64.pow(operand as u32);
                 program_counter += 2;
             }
 
             7 => {
                 let operand = combo_operand(instructions[program_counter + 1], reg_a, reg_b, reg_c);
-                reg_c = reg_a / 2_u32.pow(operand);
+                reg_c = reg_a / 2_u64.pow(operand as u32);
                 program_counter += 2;
             }
 
-            _ => {
-
-            }
+            _ => {}
         }
     }
-    let mut output_string = output.iter().map(|x| {
-        let mut str = (*x).to_string();
-        str.push(',');
-        return str;
-    }).collect::<String>();
+    let mut output_string = output
+        .iter()
+        .map(|x| {
+            let mut str = (*x).to_string();
+            str.push(',');
+            return str;
+        })
+        .collect::<String>();
     output_string.pop();
-    println!("{:?}", output_string);
+    //println!("{:?}", output_string);
     Some(output_string)
 }
 
-fn combo_operand(operand: u32, reg_a: u32, reg_b: u32, reg_c: u32) -> u32 {
+fn combo_operand(operand: u64, reg_a: u64, reg_b: u64, reg_c: u64) -> u64 {
     return match operand {
         4 => reg_a,
         5 => reg_b,
         6 => reg_c,
-        _ => operand
-    }
+        _ => operand,
+    };
 }
 
-fn test_program(reg_a: u32, reg_b: u32, reg_c: u32, instructions: Vec<u32>) -> bool {
+fn test_program(reg_a: u64, reg_b: u64, reg_c: u64, instructions: Vec<u64>) -> Vec<u64> {
     let mut program_counter = 0;
-    let mut output: Vec<u32> = Vec::new();
+    let mut output: Vec<u64> = Vec::new();
     let mut reg_a = reg_a;
     let mut reg_b = reg_b;
     let mut reg_c = reg_c;
@@ -95,7 +106,7 @@ fn test_program(reg_a: u32, reg_b: u32, reg_c: u32, instructions: Vec<u32>) -> b
         match instructions[program_counter] {
             0 => {
                 let operand = combo_operand(instructions[program_counter + 1], reg_a, reg_b, reg_c);
-                reg_a = reg_a / 2_u32.pow(operand);
+                reg_a = reg_a / 2_u64.pow(operand as u32);
                 program_counter += 2;
             }
 
@@ -115,8 +126,7 @@ fn test_program(reg_a: u32, reg_b: u32, reg_c: u32, instructions: Vec<u32>) -> b
                 let operand = instructions[program_counter + 1];
                 if reg_a == 0 {
                     program_counter += 2;
-                }
-                else {
+                } else {
                     program_counter = operand as usize;
                 }
             }
@@ -134,38 +144,50 @@ fn test_program(reg_a: u32, reg_b: u32, reg_c: u32, instructions: Vec<u32>) -> b
 
             6 => {
                 let operand = combo_operand(instructions[program_counter + 1], reg_a, reg_b, reg_c);
-                reg_b = reg_a / 2_u32.pow(operand);
+                reg_b = reg_a / 2_u64.pow(operand as u32);
                 program_counter += 2;
             }
 
             7 => {
                 let operand = combo_operand(instructions[program_counter + 1], reg_a, reg_b, reg_c);
-                reg_c = reg_a / 2_u32.pow(operand);
+                reg_c = reg_a / 2_u64.pow(operand as u32);
                 program_counter += 2;
             }
 
-            _ => {
-
-            }
-        }
-        if output != instructions[0..output.len()] {
-            return false
+            _ => {}
         }
     }
-    if output == instructions {
-        return true
-    }
-    return false
+    return output;
 }
 
-pub fn part_two(input: &str) -> Option<u32> {
-    let mut reg_a = 0;
+pub fn part_two(input: &str) -> Option<u64> {
+    //let mut reg_a: u64 = 0;
     let lines = input.lines().collect::<Vec<&str>>();
-    let instructions: Vec<u32> = lines[4][9..].split(",").map(|x| x.parse().unwrap()).collect();
-    while !test_program(reg_a, 0, 0, instructions.clone()) {
-        reg_a += 1;
+    let instructions: Vec<u64> = lines[4][9..]
+        .split(",")
+        .map(|x| x.parse().unwrap())
+        .collect();
+    let mut register_stack: Vec<u64> = Vec::new();
+    register_stack.push(0);
+    for instruction in instructions.clone().iter().rev() {
+        //println!("Finding Instruction: {:?}", instruction);
+        let mut place_holder: Vec<u64> = Vec::new();
+        for i in (0..8) {
+            for reg_a in register_stack.clone() {
+                let test_reg_a = reg_a * 8 + i;
+                let output = test_program(test_reg_a, 0, 0, instructions.clone());
+                if output[0] == *instruction {
+                    //println!("Output: {:?}", output);
+                    place_holder.push(reg_a * 8 + i);
+                }
+            }
+        }
+        register_stack = place_holder;
     }
-    return Some(reg_a);
+    let reg_a = *register_stack.iter().min().unwrap();
+    // println!("{:?}", test_program(reg_a, 0, 0, instructions));
+    // println!("{:?}", register_stack);
+    return Some(reg_a as u64);
 }
 
 #[cfg(test)]

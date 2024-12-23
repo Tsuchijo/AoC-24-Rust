@@ -10,15 +10,15 @@ pub fn part_one(input: &str) -> Option<u32> {
 
     let width = char_matrix[0].len();
     let height = char_matrix.len();
-    let mut searched: HashSet<(u32, u32)> = HashSet::new();
+    let mut searched: HashSet<(i32, i32)> = HashSet::new();
     let mut price = 0;
-    for i in 0..height as u32 {
-        for j in 0..width as u32 {
+    for i in 0..height as i32 {
+        for j in 0..width as i32 {
             let char = char_matrix[i as usize][j as usize];
             if searched.contains(&(i, j)) {
                 continue;
             }
-            let mut patch: HashSet<(u32, u32)> = HashSet::new();
+            let mut patch: HashSet<(i32, i32)> = HashSet::new();
             let (perimeter, area) =
                 find_all_patch(i as i32, j as i32, char, &char_matrix, &mut patch);
             searched.extend(patch);
@@ -33,7 +33,7 @@ fn find_all_patch(
     j: i32,
     char_id: char,
     char_matrix: &Vec<Vec<char>>,
-    patch: &mut HashSet<(u32, u32)>,
+    patch: &mut HashSet<(i32, i32)>,
 ) -> (u32, u32) {
     let width = char_matrix[0].len() as i32;
     let height = char_matrix.len() as i32;
@@ -41,12 +41,12 @@ fn find_all_patch(
     {
         return (1, 0);
     } else {
-        patch.insert((i as u32, j as u32));
+        patch.insert((i, j));
     }
     let mut perimeter = 0;
     let mut area: u32 = 1;
     for (dx, dy) in [(0, 1), (0, -1_i32), (1, 0), (-1_i32, 0)] {
-        if patch.contains(&((i + dx) as u32, (j + dy) as u32)) {
+        if patch.contains(&((i + dx), (j + dy))) {
             continue;
         }
         let (adj, run_area) = find_all_patch(i + dx, j + dy, char_id, char_matrix, patch);
@@ -63,16 +63,16 @@ pub fn part_two(input: &str) -> Option<u32> {
         .collect::<Vec<Vec<char>>>();
     let width = char_matrix[0].len();
     let height = char_matrix.len();
-    let mut patches: Vec<HashSet<(u32, u32)>> = Vec::new();
+    let mut patches: Vec<HashSet<(i32, i32)>> = Vec::new();
     let mut areas: Vec<u32> = Vec::new();
-    let mut searched: HashSet<(u32, u32)> = HashSet::new();
-    for i in 0..height as u32 {
-        for j in 0..width as u32 {
+    let mut searched: HashSet<(i32, i32)> = HashSet::new();
+    for i in 0..height as i32 {
+        for j in 0..width as i32 {
             let char = char_matrix[i as usize][j as usize];
             if searched.contains(&(i, j)) {
                 continue;
             }
-            let mut patch: HashSet<(u32, u32)> = HashSet::new();
+            let mut patch: HashSet<(i32, i32)> = HashSet::new();
             let (perimeter, area) =
                 find_all_patch(i as i32, j as i32, char, &char_matrix, &mut patch);
             patches.push(patch.clone());
@@ -99,72 +99,62 @@ pub fn part_two(input: &str) -> Option<u32> {
     );
 }
 
-fn find_number_sides(patch: HashSet<(u32, u32)>) -> u32 {
-    if patch.len() == 1 {
-        return 4;
-    }
-    let starting_point: (u32, u32) = *patch.iter().reduce(|acc, coords| {
-        if coords.0 > acc.0 {
-            return  coords;
-        }
-        if coords.0 == acc.0 && coords.1 > acc.1 {
-            return coords;
-        }
-        return acc;
-    }).unwrap();
-    let mut current_pos = starting_point;
+fn find_number_sides(patch: HashSet<(i32, i32)>) -> u32 {
     let mut num_sides = 0;
-    let mut dir = (0, -1);
-    while num_sides == 0 || current_pos != starting_point {
-        //println!("current pos: {:?}", current_pos);
-        let (_, right) = get_left_right(dir);
-        let right_pos = ((current_pos.0 as i32 + right.0) as u32, (current_pos.1 as i32 + right.1) as u32);
-        let forward_pos = ((current_pos.0 as i32 + dir.0) as u32, (current_pos.1 as i32 + dir.1) as u32);
-        if patch.contains(&right_pos) {
-            num_sides += 1;
-            current_pos = right_pos;
-            dir = right;
-        }
-        else if patch.contains(&forward_pos) {
-            current_pos = forward_pos;
-        }
-        else {
-            for rotation in get_left_rotation(dir) {
-                num_sides += 1;
-                let rotate_pos = ((current_pos.0 as i32 + rotation.0) as u32, (current_pos.1 as i32 + rotation.1) as u32);
-                if patch.contains(&rotate_pos) {
-                    current_pos = rotate_pos;
-                    dir = rotation;
-                    break
+    for (i, j) in patch.iter() {
+        for corner in 0..4 {
+            match check_corner(*i, *j, &patch, corner) {
+                (true, false, false, false) => {
+                    num_sides += 1;
                 }
+                (true, true, true, false) => {
+                    num_sides += 1;
+                }
+                (true, false, false, true) => {
+                    num_sides += 1;
+                }
+                _ => {}
             }
         }
-        
     }
-    if get_left_right(dir).0  == (0,-1) || get_left_right(dir).1 == (0,-1) {
-        return num_sides + 1;
-    }
-    return num_sides + 2;
+    return num_sides;
 }
 
-fn get_left_right(direction: (i32, i32)) -> ((i32, i32), (i32, i32)) {
-    return match direction {
-        (1,0) => ((0, -1), (0 ,1)),
-        (-1,0) => ((0, 1), (0 ,-1)),
-        (0,1) => ((1, 0), (-1 ,0)),
-        (0,-1) => ((-1, 0), (1 ,0)),
-        _ => ((0, -1), (0 ,1))
-    };
-}
-
-fn get_left_rotation(direction: (i32, i32)) -> Vec<(i32, i32)> {
-    return match direction {
-        (1,0) => vec![(0, -1), (-1 , 0)],
-        (-1,0) => vec![(0, 1), (1 ,0)],
-        (0,1) => vec![(1, 0), (0 ,-1)],
-        (0,-1) => vec![(-1, 0), (0 ,1)],
-        _ => vec![(-1, 0), (0 ,1)]
-    };
+fn check_corner(
+    i: i32,
+    j: i32,
+    patch: &HashSet<(i32, i32)>,
+    corner: u32,
+) -> (bool, bool, bool, bool) {
+    if corner == 0 {
+        return (
+            patch.contains(&(i, j)),
+            patch.contains(&(i + 1, j)),
+            patch.contains(&(i, j + 1)),
+            patch.contains(&(i + 1, j + 1)),
+        );
+    } else if corner == 1 {
+        return (
+            patch.contains(&(i, j)),
+            patch.contains(&(i - 1, j)),
+            patch.contains(&(i, j + 1)),
+            patch.contains(&(i - 1, j + 1)),
+        );
+    } else if corner == 2 {
+        return (
+            patch.contains(&(i, j)),
+            patch.contains(&(i + 1, j)),
+            patch.contains(&(i, j - 1)),
+            patch.contains(&(i + 1, j - 1)),
+        );
+    } else {
+        return (
+            patch.contains(&(i, j)),
+            patch.contains(&(i - 1, j)),
+            patch.contains(&(i, j - 1)),
+            patch.contains(&(i - 1, j - 1)),
+        );
+    }
 }
 
 #[cfg(test)]

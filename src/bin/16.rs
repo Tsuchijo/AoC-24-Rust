@@ -1,4 +1,7 @@
-use std::{collections::{HashMap, HashSet, VecDeque}, rc::{self, Rc}};
+use std::{
+    collections::{HashMap, HashSet, VecDeque},
+    rc::{self, Rc},
+};
 
 advent_of_code::solution!(16);
 
@@ -20,38 +23,41 @@ pub fn part_one(input: &str) -> Option<u32> {
     return Some(low_score);
 }
 
-#[derive(Clone)]
-#[derive(Eq, Hash, PartialEq, Debug)]
+#[derive(Clone, Eq, Hash, PartialEq, Debug)]
 struct PathTree {
     score: u32,
     coordinate: (usize, usize),
     direction: (i32, i32),
-    parent: Option<Rc<PathTree>>
+    parent: Option<Rc<PathTree>>,
 }
 
-fn bfs_search(grid: &Vec<Vec<char>>, start_coord: (usize, usize), end_coord: (usize, usize)) -> Vec<Rc<PathTree>> {
+fn bfs_search(
+    grid: &Vec<Vec<char>>,
+    start_coord: (usize, usize),
+    end_coord: (usize, usize),
+) -> Vec<Rc<PathTree>> {
     let mut to_search: VecDeque<PathTree> = VecDeque::new();
     let mut end_paths: Vec<Rc<PathTree>> = Vec::new();
     let mut searched: HashMap<((usize, usize), (i32, i32)), u32> = HashMap::new();
     let mut lowest_score = 0xFFFFFFFF;
-    to_search.push_back(PathTree{
+    to_search.push_back(PathTree {
         score: 0,
         coordinate: start_coord,
-        direction: (1,0),
-        parent: None
+        direction: (1, 0),
+        parent: None,
     });
     while !to_search.is_empty() {
         let coord_tree = Rc::new(to_search.pop_front().unwrap());
         for dir in get_rotations(coord_tree.direction) {
             let x = coord_tree.coordinate.0 as i32 + dir.0;
             let y = coord_tree.coordinate.1 as i32 + dir.1;
-            if grid[y as usize][x as usize ] != '#' {
+            if grid[y as usize][x as usize] != '#' {
                 let new_coord = (x as usize, y as usize);
-                let mut new_path = PathTree{
+                let mut new_path = PathTree {
                     score: coord_tree.score + 1,
                     coordinate: (x as usize, y as usize),
                     direction: dir,
-                    parent: Some(coord_tree.clone())
+                    parent: Some(coord_tree.clone()),
                 };
 
                 if searched.contains_key(&(new_coord, dir)) {
@@ -70,19 +76,19 @@ fn bfs_search(grid: &Vec<Vec<char>>, start_coord: (usize, usize), end_coord: (us
                         lowest_score = new_path.score;
                         end_paths.push(Rc::new(new_path));
                     }
-
-                }
-                else{
+                } else {
                     if new_path.score < lowest_score && turned {
                         to_search.push_back(new_path);
-                    }
-                    else if new_path.score < lowest_score {
+                    } else if new_path.score < lowest_score {
                         to_search.push_front(new_path);
                     }
                 }
             }
         }
-        searched.insert((coord_tree.coordinate, coord_tree.direction), coord_tree.score);
+        searched.insert(
+            (coord_tree.coordinate, coord_tree.direction),
+            coord_tree.score,
+        );
     }
     end_paths.retain(|x| x.score == lowest_score);
     return end_paths;
@@ -90,9 +96,9 @@ fn bfs_search(grid: &Vec<Vec<char>>, start_coord: (usize, usize), end_coord: (us
 
 fn get_rotations(direction: (i32, i32)) -> Vec<(i32, i32)> {
     if direction.1 == 0 {
-        return vec![direction, (0,1), (0,-1)]
+        return vec![direction, (0, 1), (0, -1)];
     } else {
-        return vec![direction, (1,0), (-1,0)]
+        return vec![direction, (1, 0), (-1, 0)];
     }
 }
 
